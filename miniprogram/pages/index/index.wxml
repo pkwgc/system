@@ -1,0 +1,12 @@
+<view class="container">
+  <view class="title">德州扑克</view>
+  <view class="buttons">
+    <button class="btn-primary" bindtap="createGame">创建游戏</button>
+    <button class="btn-secondary" bindtap="joinGame">加入游戏</button>
+  </view>
+  <view class="join-form" wx:if="{{showJoinForm}}">
+    <input type="text" placeholder="输入游戏ID" model:value="{{gameIdInput}}" />
+    <input type="text" placeholder="输入玩家名称" model:value="{{playerName}}" />
+    <button class="btn-confirm" bindtap="confirmJoin">确认加入</button>
+  </view>
+</view>

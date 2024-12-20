@@ -1,0 +1,58 @@
+<view class="container">
+  <view class="poker-table">
+    <!-- Community Cards -->
+    <view class="community-cards">
+      <block wx:for="{{communityCards}}" wx:key="index">
+        <view class="card {{item ? 'card-' + item.suit + '-' + item.rank : 'card-back'}}">
+          {{item ? item.rank + item.suit : ''}}
+        </view>
+      </block>
+    </view>
+
+    <!-- Player Positions -->
+    <view class="player-positions">
+      <block wx:for="{{players}}" wx:key="id">
+        <view class="player-spot position-{{item.position}}" wx:if="{{item}}">
+          <view class="player-info">
+            <text class="player-name">{{item.name}}</text>
+            <text class="player-chips">{{item.chips}}</text>
+          </view>
+          <view class="player-cards" wx:if="{{item.id === currentPlayerId}}">
+            <view class="card {{card ? 'card-' + card.suit + '-' + card.rank : 'card-back'}}"
+                  wx:for="{{item.cards}}"
+                  wx:for-item="card"
+                  wx:key="index">
+              {{card ? card.rank + card.suit : ''}}
+            </view>
+          </view>
+          <view class="player-status" wx:if="{{item.state !== 'WAITING'}}">
+            {{item.state}}
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <!-- Pot Information -->
+    <view class="pot-info">
+      当前池: {{pot}}
+    </view>
+  </view>
+
+  <!-- Player Controls -->
+  <view class="player-controls" wx:if="{{isCurrentPlayer}}">
+    <view class="bet-controls">
+      <slider class="bet-slider"
+              min="{{minBet}}"
+              max="{{currentPlayer.chips}}"
+              value="{{betAmount}}"
+              bindchange="onBetChange"/>
+      <text class="bet-amount">下注: {{betAmount}}</text>
+    </view>
+    <view class="action-buttons">
+      <button class="btn-fold" bindtap="onFold">弃牌</button>
+      <button class="btn-check" bindtap="onCheck" wx:if="{{canCheck}}">让牌</button>
+      <button class="btn-call" bindtap="onCall" wx:if="{{!canCheck}}">跟注</button>
+      <button class="btn-raise" bindtap="onRaise">加注</button>
+    </view>
+  </view>
+</view>

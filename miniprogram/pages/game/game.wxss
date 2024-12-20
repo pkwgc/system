@@ -1,0 +1,130 @@
+.container {
+  height: 100vh;
+  background-color: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+}
+
+.poker-table {
+  width: 100%;
+  height: 70vh;
+  background-color: #2c3e50;
+  border-radius: 150px;
+  position: relative;
+  margin: 20px;
+}
+
+.community-cards {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 10px;
+}
+
+.card {
+  width: 50px;
+  height: 70px;
+  background-color: white;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.card-back {
+  background-color: #e74c3c;
+}
+
+.player-positions {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.player-spot {
+  position: absolute;
+  width: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.position-0 { bottom: 10%; left: 50%; transform: translateX(-50%); }
+.position-1 { bottom: 20%; left: 20%; }
+.position-2 { bottom: 40%; left: 10%; }
+.position-3 { top: 40%; left: 10%; }
+.position-4 { top: 20%; left: 20%; }
+.position-5 { top: 10%; left: 50%; transform: translateX(-50%); }
+.position-6 { top: 20%; right: 20%; }
+.position-7 { top: 40%; right: 10%; }
+.position-8 { bottom: 40%; right: 10%; }
+
+.player-info {
+  background-color: rgba(0,0,0,0.7);
+  padding: 5px 10px;
+  border-radius: 15px;
+  color: white;
+  text-align: center;
+}
+
+.player-name {
+  font-size: 14px;
+  display: block;
+}
+
+.player-chips {
+  font-size: 12px;
+  color: #2ecc71;
+}
+
+.pot-info {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 18px;
+  background-color: rgba(0,0,0,0.7);
+  padding: 5px 15px;
+  border-radius: 20px;
+}
+
+.player-controls {
+  padding: 20px;
+  background-color: #34495e;
+}
+
+.bet-controls {
+  margin-bottom: 15px;
+}
+
+.bet-slider {
+  margin: 10px 0;
+}
+
+.bet-amount {
+  color: white;
+  font-size: 16px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.action-buttons button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.btn-fold { background-color: #e74c3c; color: white; }
+.btn-check { background-color: #3498db; color: white; }
+.btn-call { background-color: #2ecc71; color: white; }
+.btn-raise { background-color: #f1c40f; color: white; }
