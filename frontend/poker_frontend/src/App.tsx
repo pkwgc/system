@@ -68,37 +68,60 @@ function App() {
   }, [playerName, gameId])
 
   const setupWebSocket = useCallback((gameId: string, playerId: string) => {
-    console.log('Setting up WebSocket connection...')
+    console.log('Setting up WebSocket connection...', { gameId, playerId })
     if (!gameId || !playerId) {
       console.error('Game ID and Player ID are required for WebSocket connection')
       return
     }
+
+    // Clean up existing connection if any
+    if (ws) {
+      console.log('Cleaning up existing WebSocket connection')
+      ws.close()
+      setWs(null)
+    }
+
     const wsUrl = `${import.meta.env.VITE_WS_URL}/ws/${gameId}/${playerId}`
     console.log('WebSocket URL:', wsUrl)
     const websocket = new WebSocket(wsUrl)
 
+    websocket.onopen = () => {
+      console.log('WebSocket connection established')
+    }
+
     websocket.onmessage = (event) => {
       console.log('WebSocket message received:', event.data)
-      const data = JSON.parse(event.data)
-      setGameState(data)
+      try {
+        const data = JSON.parse(event.data)
+        setGameState(data)
+      } catch (error) {
+        console.error('Failed to parse WebSocket message:', error)
+      }
     }
 
     websocket.onerror = (error) => {
       console.error('WebSocket error:', error)
     }
 
-    websocket.onclose = () => {
-      console.log('WebSocket connection closed')
+    websocket.onclose = (event) => {
+      console.log('WebSocket connection closed:', event.code, event.reason)
       setWs(null)
+
+      // Only attempt reconnection if we still have valid IDs
+      if (event.code !== 1000 && gameId && playerId) {
+        console.log('Attempting to reconnect...')
+        setTimeout(() => setupWebSocket(gameId, playerId), 3000)
+      }
     }
 
     setWs(websocket)
-  }, [])
+  }, [ws])
 
   useEffect(() => {
     return () => {
       if (ws) {
-        ws.close()
+        console.log('Cleaning up WebSocket connection on unmount')
+        ws.close(1000, 'Component unmounting')
       }
     }
   }, [ws])
