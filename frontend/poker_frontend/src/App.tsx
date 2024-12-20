@@ -69,6 +69,10 @@ function App() {
 
   const setupWebSocket = useCallback((gameId: string, playerId: string) => {
     console.log('Setting up WebSocket connection...')
+    if (!gameId || !playerId) {
+      console.error('Game ID and Player ID are required for WebSocket connection')
+      return
+    }
     const wsUrl = `${import.meta.env.VITE_WS_URL}/ws/${gameId}/${playerId}`
     console.log('WebSocket URL:', wsUrl)
     const websocket = new WebSocket(wsUrl)
