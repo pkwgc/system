@@ -41,7 +41,7 @@ async def create_game():
     return {"game_id": game_id}
 
 @app.post("/game/{game_id}/join")
-async def join_game(game_id: str, player_name: str):
+async def join_game(game_id: str, player: dict):
     if game_id not in active_games:
         raise HTTPException(status_code=404, detail="Game not found")
 
@@ -49,10 +49,14 @@ async def join_game(game_id: str, player_name: str):
     if len(game.state.players) >= 9:
         raise HTTPException(status_code=400, detail="Game is full")
 
+    player_name = player.get("player_name")
+    if not player_name:
+        raise HTTPException(status_code=422, detail="player_name is required")
+
     player_id = str(uuid.uuid4())
     position = len(game.state.players)
 
-    player = Player(
+    new_player = Player(
         id=player_id,
         name=player_name,
         chips=1000,  # Starting chips
@@ -60,7 +64,7 @@ async def join_game(game_id: str, player_name: str):
         state=PlayerState.WAITING
     )
 
-    game.state.players[player_id] = player
+    game.state.players[player_id] = new_player
     return {"player_id": player_id, "game_state": game.state}
 
 @app.websocket("/ws/{game_id}/{player_id}")
