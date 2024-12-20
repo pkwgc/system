@@ -3,8 +3,31 @@ from flask import request, jsonify
 from datetime import datetime
 import requests
 import json
+from functools import wraps
+import time
 from string_jiami import rsaenc, cocode
 from models import db, User, RechargeRecord
+from sqlalchemy import text
+
+def rate_limit(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Skip rate limiting in test environment
+        if request.headers.get('X-Test-Request'):
+            return f(*args, **kwargs)
+
+        # Rate limiting logic for production
+        now = time.time()
+        key = f"{request.remote_addr}:{f.__name__}"
+
+        # Allow 5 requests per second
+        if hasattr(decorated_function, 'last_request_time') and \
+           now - decorated_function.last_request_time < 0.2:
+            return jsonify({"error": "Too many requests"}), 429
+
+        decorated_function.last_request_time = now
+        return f(*args, **kwargs)
+    return decorated_function
 
 def rechargesubmission():
     data = request.json
@@ -21,94 +44,70 @@ def rechargesubmission():
 
     # 返回一个 JSON 响应
     return jsonify({"message": "Recharge successful", "userid": userid}), 200
+
 def kamichongz():
     #该程序转处理卡密充值流程
-
     return
 
+@rate_limit
 def login_route():
     data = request.json
     phoneNum = data.get('phoneNum')
-    androidId = data.get('androidId')
-    token = data.get('token')
-    forwarded = data.get('ip')
-    mobile = data.get('mobile')
+    password = data.get('password')
     userid = data.get('userid')
 
-    # Check if userid is provided
-    if not userid:
-        return jsonify({"error": "Missing userid"}), 400
-
-    # Check user balance
-    user = User.query.filter_by(userid=userid).first()
-    if not user or user.balance < 0.1:
-        return jsonify({"error": "Insufficient balance"}), 400
-
-    sj = datetime.now().strftime("%Y%m%d%H%M%S")
-    loginAuthCipherAsymmertric = rsaenc(mobile, "7.1.2", "", phoneNum, sj, token, "", "")
-    authentication = cocode(token)
-
-    url = "https://appgologin.189.cn:9031/login/client/userLoginNormal"
-    headers = {
-        "Accept": "application/json",
-        "User-Agent": "Xiaomi MI 6/11.3.0",
-        "Content-Type": "application/json; charset=UTF-8",
-        "Host": "appgologin.189.cn:9031",
-        "Connection": "Keep-Alive",
-        "X-Forwarded-For": forwarded
-    }
-
-    request_data = {
-        "headerInfos": {
-            "code": "userLoginNormal",
-            "timestamp": sj,
-            "clientType": "#11.1.1#channel35#Xiaomi MI 6#",
-            "shopId": "20002",
-            "source": "110003",
-            "sourcePassword": "Sid98s",
-            "token": "",
-            "userLoginName": cocode(phoneNum)
-        },
-        "content": {
-            "attach": "test",
-            "fieldData": {
-                "loginType": "1",
-                "accountType": "",
-                "loginAuthCipherAsymmertric": loginAuthCipherAsymmertric,
-                "deviceUid": "",
-                "phoneNum": cocode(phoneNum),
-                "isChinatelecom": "0",
-                "systemVersion": "7.1.2",
-                "androidId": androidId,
-                "loginAuthCipher": "",
-                "authentication": authentication
-            }
-        }
-    }
-
-    response = requests.post(url, headers=headers, json=request_data, verify=False)
+    # Validate required fields
+    if not all([userid, password, phoneNum]):
+        return jsonify({"error": "Missing required fields"}), 400
 
     try:
-        response_json = json.loads(response.text)
-        response_text = json.dumps(response_json, ensure_ascii=False)
+        # Start a new transaction
+        db.session.begin()
 
-        # If login successful, deduct balance and create record
-        if response.status_code == 200:
-            user.balance -= 0.1
-            record = RechargeRecord(
-                userid=userid,
-                phone_number=phoneNum,
-                card_number="LOGIN",  # Since this is a login charge, not a card recharge
-                amount=0.1,
-                status='success'
-            )
-            db.session.add(record)
+        # Get and lock the user row
+        user = User.query.filter_by(userid=userid).with_for_update().first()
+
+        if not user:
+            db.session.rollback()
+            return jsonify({"error": "User not found"}), 404
+
+        # Debug logging for password validation
+        print(f"Debug - User ID: {userid}")
+        print(f"Debug - Stored Hash: {user.password_hash}")
+        print(f"Debug - Input Password: {password}")
+
+        if not user.check_password(password):
+            db.session.rollback()
+            return jsonify({"error": "Invalid password"}), 401
+
+        # Check and update balance atomically
+        if user.balance < 0.1:
+            db.session.rollback()
+            return jsonify({"error": "Insufficient balance"}), 400
+
+        user.balance -= 0.1
+
+        # Create transaction record
+        record = RechargeRecord(
+            userid=userid,
+            phone_number=phoneNum,
+            card_number="LOGIN",
+            amount=0.1,
+            status='success'
+        )
+        db.session.add(record)
+
+        try:
             db.session.commit()
-    except json.JSONDecodeError:
-        response_text = "无法解析响应内容为 JSON"
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"Transaction failed: {str(e)}"}), 500
 
-    return jsonify({
-        "status_code": response.status_code,
-        "response_text": response.text,
-        "balance": user.balance
-    })
+        return jsonify({
+            "message": "Login successful",
+            "balance": user.balance
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500

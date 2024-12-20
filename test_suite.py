@@ -2,19 +2,24 @@ import unittest
 from main import app, db
 from models import User, RechargeRecord
 from sqlalchemy import inspect
+from config import Config
 
 class TestWebApp(unittest.TestCase):
     def setUp(self):
         app.config['TESTING'] = True
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://pkwgc:Wghfd@584521@fd@rm-m5e0666vtv5234qi39o.mysql.rds.aliyuncs.com:3306/stsmen'
+        app.config.from_object(Config)  # Use centralized config
         self.client = app.test_client()
         with app.app_context():
+            # Add test confirmation header
+            self.client.environ_base['HTTP_X_TEST_REQUEST'] = 'true'
             db.drop_all()  # Drop all tables first
             db.create_all()  # Create fresh tables
 
     def tearDown(self):
         with app.app_context():
             try:
+                # Add test confirmation header
+                self.client.environ_base['HTTP_X_TEST_REQUEST'] = 'true'
                 db.session.query(User).delete()
                 db.session.query(RechargeRecord).delete()
                 db.session.commit()

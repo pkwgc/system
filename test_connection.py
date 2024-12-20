@@ -1,25 +1,18 @@
 import pymysql
-import urllib.parse
 import time
+from config import Config
 
 def test_mysql_connection():
-    # Connection parameters
-    host = 'rm-m5e0666vtv5234qi39o.mysql.rds.aliyuncs.com'
-    user = 'pkwgc'
-    password = 'Wghfd@584521@fd'
-    database = 'stsmen'
-    port = 3306
-
-    print(f"Attempting to connect to MySQL database at {host}...")
+    print(f"Attempting to connect to MySQL database at {Config.DB_HOST}...")
     start_time = time.time()
 
     try:
         connection = pymysql.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=database,
-            port=port,
+            host=Config.DB_HOST,
+            user=Config.DB_USER,
+            password=Config.DB_PASS.replace('%40', '@'),  # Decode URL-encoded password
+            database=Config.DB_NAME,
+            port=int(Config.DB_PORT),
             connect_timeout=5  # Set a 5-second timeout
         )
         print("Successfully connected to the database!")
