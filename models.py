@@ -8,7 +8,7 @@ class User(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(50), unique=True, nullable=False)
+    user_id = db.Column(db.String(50), primary_key=True, unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
     balance = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -23,7 +23,7 @@ class LoginRecord(db.Model):
     __tablename__ = 'login_records'
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(50), db.ForeignKey('users.user_id'), nullable=False)
+    user_id = db.Column(db.String(50), db.ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
     card_number = db.Column(db.String(50), nullable=False)
     recharge_number = db.Column(db.String(50), nullable=False)
     amount = db.Column(db.Float, nullable=False, default=0.1)

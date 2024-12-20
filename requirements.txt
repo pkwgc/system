@@ -1,0 +1,12 @@
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+pymysql==1.1.0
+requests==2.31.0
+gunicorn==21.2.0
+cryptography==41.0.7
+Flask-Limiter==3.5.0
+python-dotenv==1.0.0
+Werkzeug==3.0.1
+limits==3.7.0
+SQLAlchemy==2.0.23
+aiohttp==3.9.1
