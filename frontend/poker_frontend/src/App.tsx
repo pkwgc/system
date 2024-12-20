@@ -1,21 +1,26 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
+import './App.css'
 import { GameState } from './types/game'
-import { PokerTable } from './components/PokerTable'
 
 function App() {
-  const [gameId, setGameId] = useState<string>('')
-  const [playerName, setPlayerName] = useState<string>('')
-  const [playerId, setPlayerId] = useState<string>('')
+  const [playerName, setPlayerName] = useState('')
+  const [gameId, setGameId] = useState('')
+  const [playerId, setPlayerId] = useState('')
   const [gameState, setGameState] = useState<GameState | null>(null)
-  const [betAmount, setBetAmount] = useState<number>(0)
   const [ws, setWs] = useState<WebSocket | null>(null)
 
-  const createGame = async () => {
+  console.log('App rendered with:', { playerName, gameId, playerId, gameState })
+
+  const createGame = useCallback(async () => {
     try {
-      console.log('Attempting to create game...');
+      console.log('Attempting to create game with player name:', playerName)
+      if (!playerName) {
+        console.error('Player name is required')
+        return
+      }
       const response = await fetch(`${import.meta.env.VITE_API_URL}/game/create`, {
         method: 'POST',
         headers: {
@@ -34,11 +39,15 @@ function App() {
     } catch (error) {
       console.error('Failed to create game:', error);
     }
-  }
+  }, [playerName])
 
-  const joinGame = async () => {
+  const joinGame = useCallback(async () => {
     try {
-      console.log('Attempting to join game...');
+      console.log('Attempting to join game...')
+      if (!playerName || !gameId) {
+        console.error('Player name and game ID are required')
+        return
+      }
       const response = await fetch(`${import.meta.env.VITE_API_URL}/game/${gameId}/join`, {
         method: 'POST',
         headers: {
@@ -56,18 +65,18 @@ function App() {
     } catch (error) {
       console.error('Failed to join game:', error);
     }
-  }
+  }, [playerName, gameId])
 
-  const setupWebSocket = (gameId: string, playerId: string) => {
+  const setupWebSocket = useCallback((gameId: string, playerId: string) => {
+    console.log('Setting up WebSocket connection...')
     const wsUrl = `${import.meta.env.VITE_WS_URL}/ws/${gameId}/${playerId}`
+    console.log('WebSocket URL:', wsUrl)
     const websocket = new WebSocket(wsUrl)
 
     websocket.onmessage = (event) => {
+      console.log('WebSocket message received:', event.data)
       const data = JSON.parse(event.data)
-      if (data.type === 'game_state') {
-        setGameState(data.data)
-        setBetAmount(data.data.minimumBet)
-      }
+      setGameState(data)
     }
 
     websocket.onerror = (error) => {
@@ -75,18 +84,12 @@ function App() {
     }
 
     websocket.onclose = () => {
-      console.log('WebSocket disconnected')
-      setTimeout(() => setupWebSocket(gameId, playerId), 1000)
+      console.log('WebSocket connection closed')
+      setWs(null)
     }
 
     setWs(websocket)
-  }
-
-  const sendAction = (action: string, amount: number = 0) => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({ action, amount }))
-    }
-  }
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -96,52 +99,35 @@ function App() {
     }
   }, [ws])
 
-  if (!gameState) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <Card className="w-96 p-6 bg-gray-800">
-          <h1 className="text-2xl font-bold mb-4">德州扑克</h1>
-          <div className="space-y-4">
-            <Input
-              placeholder="玩家名称"
-              value={playerName}
-              onChange={(e) => setPlayerName(e.target.value)}
-              className="bg-gray-700 text-white"
-            />
-            <Input
-              placeholder="游戏ID (可选)"
-              value={gameId}
-              onChange={(e) => setGameId(e.target.value)}
-              className="bg-gray-700 text-white"
-            />
-            <div className="flex gap-2">
-              <Button onClick={createGame} className="flex-1">
-                创建游戏
-              </Button>
-              <Button onClick={joinGame} className="flex-1" disabled={!gameId || !playerName}>
-                加入游戏
-              </Button>
-            </div>
-          </div>
-        </Card>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4">
-      <div className="container mx-auto">
-        <div className="text-center mb-4">
-          <h2 className="text-xl">游戏ID: {gameState.id}</h2>
-          <p>当前奖池: {gameState.pot}</p>
-        </div>
-        <PokerTable
-          gameState={gameState}
-          playerId={playerId}
-          onAction={sendAction}
-          betAmount={betAmount}
-          onBetChange={setBetAmount}
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">德州扑克</h1>
+      <div className="space-y-4">
+        <Input
+          type="text"
+          placeholder="玩家名称"
+          value={playerName}
+          onChange={(e) => setPlayerName(e.target.value)}
         />
+        <Input
+          type="text"
+          placeholder="游戏ID (可选)"
+          value={gameId}
+          onChange={(e) => setGameId(e.target.value)}
+        />
+        <div className="space-x-4">
+          <Button onClick={createGame} disabled={!playerName}>
+            创建游戏
+          </Button>
+          <Button onClick={joinGame} disabled={!playerName || !gameId}>
+            加入游戏
+          </Button>
+        </div>
+        {gameState && (
+          <Card className="p-4">
+            <pre>{JSON.stringify(gameState, null, 2)}</pre>
+          </Card>
+        )}
       </div>
     </div>
   )
