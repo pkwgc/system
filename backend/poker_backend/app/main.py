@@ -29,16 +29,37 @@ async def healthz():
     return {"status": "ok"}
 
 @app.post("/game/create")
-async def create_game():
+async def create_game(player: dict):
     game_id = str(uuid.uuid4())
+    player_name = player.get("player_name")
+    if not player_name:
+        raise HTTPException(status_code=422, detail="player_name is required")
+
     game_state = GameState(
         id=game_id,
         players={},
         current_phase=GamePhase.WAITING,
         dealer_position=0
     )
-    active_games[game_id] = PokerGame(game_state)
-    return {"game_id": game_id}
+
+    # Create the game and add the first player
+    game = PokerGame(game_state)
+    player_id = str(uuid.uuid4())
+    new_player = Player(
+        id=player_id,
+        name=player_name,
+        chips=1000,  # Starting chips
+        position=0,
+        state=PlayerState.WAITING
+    )
+    game.state.players[player_id] = new_player
+    active_games[game_id] = game
+
+    return {
+        "game_id": game_id,
+        "player_id": player_id,
+        "game_state": game.state
+    }
 
 @app.post("/game/{game_id}/join")
 async def join_game(game_id: str, player: dict):
