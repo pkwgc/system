@@ -7,8 +7,8 @@ db = SQLAlchemy()
 class User(db.Model):
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(50), primary_key=True, unique=True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.String(50), unique=True, nullable=False)
     password_hash = db.Column(db.String(128))
     balance = db.Column(db.Float, default=0.0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -18,6 +18,14 @@ class User(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'balance': self.balance,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        }
 
 class LoginRecord(db.Model):
     __tablename__ = 'login_records'
@@ -34,3 +42,14 @@ class LoginRecord(db.Model):
         db.Index('idx_user_id', 'user_id'),
         db.Index('idx_timestamp', 'timestamp'),
     )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'card_number': self.card_number,
+            'recharge_number': self.recharge_number,
+            'amount': self.amount,
+            'status': self.status,
+            'timestamp': self.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        }

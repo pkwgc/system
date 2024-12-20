@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from login_module import login_route, rechargesubmission
@@ -18,7 +18,33 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-# Apply rate limiting to routes
+# Frontend routes
+@app.route('/')
+def index():
+    return render_template('login.html')
+
+@app.route('/records')
+def records():
+    return render_template('records.html')
+
+@app.route('/admin')
+def admin():
+    return render_template('admin.html')
+
+# API routes with rate limiting
+@app.route('/api/records')
+@limiter.limit("1000 per minute")
+def get_records():
+    try:
+        records = LoginRecord.query.order_by(LoginRecord.timestamp.desc()).all()
+        return jsonify({
+            'data': [record.to_dict() for record in records]
+        })
+    except Exception as e:
+        return jsonify({
+            'error': str(e)
+        }), 500
+
 @app.route('/login', methods=['POST'])
 @limiter.limit("1000 per minute")
 def login():

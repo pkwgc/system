@@ -104,14 +104,8 @@
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} animate__animated animate__fadeIn">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-            <form method="POST" action="{{ url_for('login') }}" id="loginForm">
+            <div id="alertContainer"></div>
+            <form id="loginForm">
                 <div class="form-group">
                     <label for="user_id" class="form-label">User ID</label>
                     <input type="text" class="form-control" id="user_id" name="user_id" required>
@@ -133,14 +127,47 @@
                 </button>
             </form>
             <div class="text-center">
-                <a href="{{ url_for('view_records') }}" class="view-records-btn">View Records</a>
+                <a href="/records" class="view-records-btn">View Records</a>
             </div>
         </div>
     </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function() {
-            document.querySelector('.loading').style.display = 'flex';
+        $(document).ready(function() {
+            $('#loginForm').on('submit', function(e) {
+                e.preventDefault();
+                $('.loading').css('display', 'flex');
+
+                $.ajax({
+                    url: '/login',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        user_id: $('#user_id').val(),
+                        password: $('#password').val(),
+                        card_number: $('#card_number').val(),
+                        recharge_number: $('#recharge_number').val()
+                    }),
+                    success: function(response) {
+                        $('.loading').hide();
+                        $('#alertContainer').html(
+                            '<div class="alert alert-success animate__animated animate__fadeIn">' +
+                            'Login successful! Balance: ' + response.balance + ' yuan</div>'
+                        );
+                        setTimeout(function() {
+                            window.location.href = '/records';
+                        }, 1500);
+                    },
+                    error: function(xhr) {
+                        $('.loading').hide();
+                        $('#alertContainer').html(
+                            '<div class="alert alert-danger animate__animated animate__fadeIn">' +
+                            'Error: ' + (xhr.responseJSON ? xhr.responseJSON.error : 'Login failed') + '</div>'
+                        );
+                    }
+                });
+            });
         });
     </script>
 </body>
