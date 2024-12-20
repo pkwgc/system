@@ -15,28 +15,46 @@ function App() {
 
   const createGame = async () => {
     try {
+      console.log('Attempting to create game...');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/game/create`, {
-        method: 'POST'
-      })
-      const data = await response.json()
-      setGameId(data.game_id)
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ player_name: playerName })
+      });
+      console.log('Create game response status:', response.status);
+      const data = await response.json();
+      console.log('Create game response data:', data);
+      setGameId(data.game_id);
+      setPlayerId(data.player_id);
+      setGameState(data.game_state);
+      setupWebSocket(data.game_id, data.player_id);
     } catch (error) {
-      console.error('Failed to create game:', error)
+      console.error('Failed to create game:', error);
     }
   }
 
   const joinGame = async () => {
     try {
+      console.log('Attempting to join game...');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/game/${gameId}/join`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify({ player_name: playerName })
-      })
-      const data = await response.json()
-      setPlayerId(data.player_id)
-      setupWebSocket(gameId, data.player_id)
+      });
+      console.log('Join game response status:', response.status);
+      const data = await response.json();
+      console.log('Join game response data:', data);
+      setPlayerId(data.player_id);
+      setGameState(data.game_state);
+      setupWebSocket(gameId, data.player_id);
     } catch (error) {
-      console.error('Failed to join game:', error)
+      console.error('Failed to join game:', error);
     }
   }
 
