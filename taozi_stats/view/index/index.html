@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>数据统计</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .no-data-message {
+            background: rgba(255, 243, 205, 0.1);
+            color: #ffd700;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.1rem;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        :root {
+            --primary-gradient: linear-gradient(-45deg, #1a1f35, #2d3250, #1f2937, #374151);
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --item-bg: rgba(0, 0, 0, 0.2);
+            --success-color: #34d399;
+            --failure-color: #f87171;
+            --text-primary: #fff;
+            --text-secondary: #9ca3af;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            font-size: 16px;
+            height: -webkit-fill-available;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            padding: clamp(10px, 3vw, 20px);
+            background: var(--primary-gradient);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text-primary);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: clamp(20px, 4vw, 30px);
+            border-radius: clamp(12px, 2vw, 16px);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            animation: fadeIn 1s ease-out;
+            will-change: transform;
+        }
+
+        .stats-section {
+            margin-bottom: clamp(20px, 4vw, 30px);
+            padding: clamp(15px, 3vw, 25px);
+            background: var(--card-bg);
+            border-radius: 12px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            will-change: transform;
+        }
+
+        @media (hover: hover) {
+            .stats-section:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+                background: rgba(255, 255, 255, 0.08);
+            }
+        }
+
+        h1 {
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: clamp(20px, 5vw, 40px);
+            font-size: clamp(1.8rem, 5vw, 2.4rem);
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+            letter-spacing: 1px;
+        }
+
+        h2 {
+            color: var(--text-primary);
+            margin-bottom: clamp(15px, 3vw, 20px);
+            font-size: clamp(1.2rem, 4vw, 1.6rem);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 10px;
+            text-shadow: 0 0 5px rgba(255,255,255,0.2);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+            gap: clamp(15px, 3vw, 20px);
+        }
+
+        .stat-item {
+            padding: clamp(15px, 3vw, 20px);
+            background: var(--item-bg);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            will-change: transform;
+        }
+
+        @media (hover: hover) {
+            .stat-item:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+                background: rgba(0, 0, 0, 0.3);
+            }
+        }
+
+        .stat-label {
+            font-size: clamp(0.875rem, 2.5vw, 1rem);
+            color: var(--text-secondary);
+            margin-bottom: clamp(8px, 2vw, 10px);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: clamp(1.2rem, 3.5vw, 1.6rem);
+            font-weight: 600;
+            color: var(--text-primary);
+            text-shadow: 0 0 10px rgba(255,255,255,0.2);
+        }
+
+        .stat-value div {
+            word-break: break-word;
+        }
+
+        .success-rate {
+            color: var(--success-color);
+            text-shadow: 0 0 10px rgba(52, 211, 153, 0.3);
+        }
+
+        .failure-rate {
+            color: var(--failure-color);
+            text-shadow: 0 0 10px rgba(248, 113, 113, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .stats-section {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+            
+            .stat-item {
+                padding: 15px;
+            }
+            
+            .stat-value div[style*="font-size"] {
+                font-size: 0.8em !important;
+            }
+        }
+
+        .date-filter-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        form {
+            method: GET;
+        }
+
+        .date-inputs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-group input[type="datetime-local"] {
+            background: var(--item-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            min-width: 280px;
+        }
+
+        .input-group input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.5;
+            cursor: pointer;
+        }
+
+        .filter-button {
+            background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            align-self: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .filter-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
+        }
+
+        @media (max-width: 480px) {
+            .date-inputs {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .input-group input[type="datetime-local"] {
+                min-width: unset;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>数据统计分析</h1>
+        
+        <form method="GET" action="/" class="date-filter-form stats-section">
+            <div class="date-inputs">
+                <div class="input-group">
+                    <label for="start_date">开始时间: (可用数据范围: 2024-12-22 08:53:28 至 11:16:07)</label>
+                    <input type="datetime-local" id="start_date" name="start_date" 
+                        value="{:input('get.start_date', '2024-12-22T08:53:28')}" 
+                        min="2024-12-22T08:53:28" max="2024-12-22T11:16:07" 
+                        step="1" />
+                </div>
+                <div class="input-group">
+                    <label for="end_date">截止时间: (可用数据范围: 2024-12-22 08:53:28 至 11:16:07)</label>
+                    <input type="datetime-local" id="end_date" name="end_date" 
+                        value="{:input('get.end_date', '2024-12-22T11:16:07')}" 
+                        min="2024-12-22T08:53:28" max="2024-12-22T11:16:07" 
+                        step="1" />
+                </div>
+            </div>
+            <button type="submit" class="filter-button">筛选数据</button>
+        </form>
+
+        {if condition="!$has_data"}
+        <div class="no-data-message">
+            <p>{$no_data_message}</p>
+        </div>
+        {/if}
+
+        <div class="stats-section">
+            <h2>登录统计</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">总数</div>
+                    <div class="stat-value">{$login_stats.total}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">成功率</div>
+                    <div class="stat-value success-rate">{$login_stats.success_rate}%</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">失败率</div>
+                    <div class="stat-value failure-rate">{$login_stats.failure_rate}%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h2>下单统计</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">总数</div>
+                    <div class="stat-value">{$order_stats.total}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">下单成功</div>
+                    <div class="stat-value">
+                        <div class="success-rate">{$order_stats.success_count} 笔</div>
+                        <div style="font-size: 0.9em; margin-top: 5px;">成功率: {$order_stats.success_rate}%</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">下单失败</div>
+                    <div class="stat-value">
+                        <div class="failure-rate">{$order_stats.failure_count} 笔</div>
+                        <div style="font-size: 0.9em; margin-top: 5px;">失败率: {$order_stats.failure_rate}%</div>
+                    </div>
+                </div>
+                <div class="stat-item failure-note">
+                    <div class="stat-label">下单失败 (stuta=3)</div>
+                    <div class="stat-value">
+                        <div class="failure-rate">{$order_stats.order_failure_count} 笔</div>
+                        <div style="font-size: 0.9em; margin-top: 5px;">失败率: {$order_stats.order_failure_rate}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h2>总体统计</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">总数</div>
+                    <div class="stat-value">{$combined_stats.total}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">总成功</div>
+                    <div class="stat-value">
+                        <div class="success-rate">{$combined_stats.success_count} 笔</div>
+                        <div style="font-size: 0.9em; margin-top: 5px;">总成功率: {$combined_stats.success_rate}%</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">总失败</div>
+                    <div class="stat-value">
+                        <div class="failure-rate">{$combined_stats.failure_count} 笔</div>
+                        <div style="font-size: 0.9em; margin-top: 5px;">总失败率: {$combined_stats.failure_rate}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
