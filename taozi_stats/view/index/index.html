@@ -314,7 +314,7 @@
                     <div class="stat-value success-rate">{$login_stats.success_rate}%</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-label">失败率 (stuta=1,3)</div>
+                    <div class="stat-label">失败率</div>
                     <div class="stat-value failure-rate">{$login_stats.failure_rate}%</div>
                 </div>
             </div>
@@ -335,10 +335,17 @@
                     </div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-label">下单失败 (stuta=1,3)</div>
+                    <div class="stat-label">下单失败</div>
                     <div class="stat-value">
                         <div class="failure-rate">{$order_stats.failure_count} 笔</div>
                         <div style="font-size: 0.9em; margin-top: 5px;">失败率: {$order_stats.failure_rate}%</div>
+                    </div>
+                </div>
+                <div class="stat-item failure-note">
+                    <div class="stat-label">下单失败 (stuta=3)</div>
+                    <div class="stat-value">
+                        <div class="failure-rate">{$order_stats.order_failure_count} 笔</div>
+                        <div style="font-size: 0.9em; margin-top: 5px;">失败率: {$order_stats.order_failure_rate}%</div>
                     </div>
                 </div>
             </div>
