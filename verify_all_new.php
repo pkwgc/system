@@ -31,7 +31,7 @@ function checkStatistics() {
         $startTime = $startDateTime->format('Y-m-d H:i:s');
         $endTime = $endDateTime->format('Y-m-d H:i:s');
 
-        // Get unique phone count (total unique phones regardless of stuta)
+        // Get all records and count unique phones
         $stmt1 = $db->prepare("
             SELECT * FROM taozi_dx WHERE shijian > :start
         ");
@@ -39,7 +39,7 @@ function checkStatistics() {
         $allRecords = $stmt1->fetchAll(PDO::FETCH_ASSOC);
         $uniquePhones = ['total' => count(array_unique(array_column($allRecords, 'phone')))];
 
-        // Get success count (all stuta=2 records, allowing duplicates)
+        // Get all success records (stuta=2)
         $stmt2 = $db->prepare("
             SELECT * FROM taozi_dx WHERE shijian > :start AND stuta = 2
         ");
