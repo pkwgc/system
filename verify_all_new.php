@@ -33,17 +33,19 @@ function checkStatistics() {
 
         // Get all records and count unique phones
         $stmt1 = $db->prepare("
-            SELECT * FROM taozi_dx WHERE shijian > :start
+            SELECT * FROM `taozi_dx` WHERE shijian > :start
         ");
-        $stmt1->execute(['start' => $startTime]);
+        $stmt1->bindValue(':start', $startTime, PDO::PARAM_STR);
+        $stmt1->execute();
         $allRecords = $stmt1->fetchAll(PDO::FETCH_ASSOC);
         $uniquePhones = ['total' => count(array_unique(array_column($allRecords, 'phone')))];
 
         // Get all success records (stuta=2, allowing duplicates)
         $stmt2 = $db->prepare("
-            SELECT * FROM taozi_dx WHERE shijian > :start AND stuta = 2
+            SELECT * FROM `taozi_dx` WHERE shijian > :start AND stuta = 2
         ");
-        $stmt2->execute(['start' => $startTime]);
+        $stmt2->bindValue(':start', $startTime, PDO::PARAM_STR);
+        $stmt2->execute();
         $successRecords = $stmt2->fetchAll(PDO::FETCH_ASSOC);
         $successStats = ['success' => count($successRecords)];
 
