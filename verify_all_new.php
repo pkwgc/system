@@ -31,16 +31,15 @@ function checkStatistics() {
         $startTime = $startDateTime->format('Y-m-d H:i:s');
         $endTime = $endDateTime->format('Y-m-d H:i:s');
 
-        // Get all records and count unique phones
+        // Get unique phone count from taozi_dx table
         $stmt1 = $db->prepare("
-            SELECT * FROM `taozi_dx` WHERE shijian > :start
+            SELECT DISTINCT phone FROM `taozi_dx` WHERE shijian > :start
         ");
         $stmt1->bindValue(':start', $startTime, PDO::PARAM_STR);
         $stmt1->execute();
-        $allRecords = $stmt1->fetchAll(PDO::FETCH_ASSOC);
-        $uniquePhones = ['total' => count(array_unique(array_column($allRecords, 'phone')))];
+        $uniquePhones = ['total' => $stmt1->rowCount()];
 
-        // Get all success records (stuta=2, allowing duplicates)
+        // Get all success records from taozi_dx table (stuta=2, allowing duplicates)
         $stmt2 = $db->prepare("
             SELECT * FROM `taozi_dx` WHERE shijian > :start AND stuta = 2
         ");
