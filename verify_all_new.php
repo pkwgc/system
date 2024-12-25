@@ -31,32 +31,27 @@ function checkStatistics() {
         $startTime = $startDateTime->format('Y-m-d H:i:s');
         $endTime = $endDateTime->format('Y-m-d H:i:s');
 
-        // Get unique phone count
+        // Get unique phone count (total unique phones regardless of stuta)
         $stmt1 = $db->prepare("
-            SELECT COUNT(DISTINCT phone) as total
-            FROM taozi_dx 
-            WHERE shijian > :start
+            SELECT * FROM taozi_dx WHERE shijian > :start
         ");
         $stmt1->execute(['start' => $startTime]);
-        $uniquePhones = $stmt1->fetch(PDO::FETCH_ASSOC);
+        $allRecords = $stmt1->fetchAll(PDO::FETCH_ASSOC);
+        $uniquePhones = ['total' => count(array_unique(array_column($allRecords, 'phone')))];
 
-        // Get success count (stuta=2)
+        // Get success count (all stuta=2 records, allowing duplicates)
         $stmt2 = $db->prepare("
-            SELECT COUNT(*) as success,
-                MIN(shijian) as first_record,
-                MAX(shijian) as last_record
-            FROM taozi_dx 
-            WHERE shijian > :start AND stuta = 2
+            SELECT * FROM taozi_dx WHERE shijian > :start AND stuta = 2
         ");
         $stmt2->execute(['start' => $startTime]);
-        $successStats = $stmt2->fetch(PDO::FETCH_ASSOC);
+        $successRecords = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+        $successStats = ['success' => count($successRecords)];
 
         // Combine results
         $stats = [
             'total' => $uniquePhones['total'],
             'success' => $successStats['success'],
-            'first_record' => $successStats['first_record'],
-            'last_record' => $successStats['last_record']
+            'success' => $successStats['success']
         ];
         
         // Stats are already fetched and combined above
@@ -70,9 +65,7 @@ function checkStatistics() {
                 "rate" => $stats['total'] > 0 ? round(($stats['success'] / $stats['total']) * 100, 2) : 0,
                 "timeRange" => [
                     "start" => $startTime,
-                    "end" => $endTime,
-                    "first_record" => $stats['first_record'],
-                    "last_record" => $stats['last_record']
+                    "end" => $endTime
                 ]
             ]
         ];
