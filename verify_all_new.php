@@ -12,6 +12,7 @@ function checkStatistics() {
 
         // Get time range from request parameters or use default (today)
         $startTime = isset($_GET['startTime']) ? $_GET['startTime'] : date('Y-m-d 00:00:00');
+        // End time is not used in the query as per example format
         $endTime = isset($_GET['endTime']) ? $_GET['endTime'] : date('Y-m-d 23:59:59');
 
         // Validate and format dates
@@ -30,38 +31,35 @@ function checkStatistics() {
         $startTime = $startDateTime->format('Y-m-d H:i:s');
         $endTime = $endDateTime->format('Y-m-d H:i:s');
 
-        // Get unique phone count and success count
-        $stmt = $db->prepare("
-            WITH unique_phones AS (
-                SELECT COUNT(DISTINCT phone) as total
-                FROM taozi_dx 
-                WHERE shijian BETWEEN :start AND :end
-            ),
-            success_records AS (
-                SELECT COUNT(*) as success_count
-                FROM taozi_dx 
-                WHERE shijian BETWEEN :start AND :end
-                AND stuta = 2
-            ),
-            date_range AS (
-                SELECT 
-                    MIN(shijian) as first_record,
-                    MAX(shijian) as last_record
-                FROM taozi_dx
-                WHERE shijian BETWEEN :start AND :end
-            )
-            SELECT 
-                p.total,
-                s.success_count as success,
-                d.first_record,
-                d.last_record
-            FROM unique_phones p
-            CROSS JOIN success_records s
-            CROSS JOIN date_range d
+        // Get unique phone count
+        $stmt1 = $db->prepare("
+            SELECT COUNT(DISTINCT phone) as total
+            FROM taozi_dx 
+            WHERE shijian > :start
         ");
+        $stmt1->execute(['start' => $startTime]);
+        $uniquePhones = $stmt1->fetch(PDO::FETCH_ASSOC);
+
+        // Get success count (stuta=2)
+        $stmt2 = $db->prepare("
+            SELECT COUNT(*) as success,
+                MIN(shijian) as first_record,
+                MAX(shijian) as last_record
+            FROM taozi_dx 
+            WHERE shijian > :start AND stuta = 2
+        ");
+        $stmt2->execute(['start' => $startTime]);
+        $successStats = $stmt2->fetch(PDO::FETCH_ASSOC);
+
+        // Combine results
+        $stats = [
+            'total' => $uniquePhones['total'],
+            'success' => $successStats['success'],
+            'first_record' => $successStats['first_record'],
+            'last_record' => $successStats['last_record']
+        ];
         
-        $stmt->execute(['start' => $startTime, 'end' => $endTime]);
-        $stats = $stmt->fetch(PDO::FETCH_ASSOC);
+        // Stats are already fetched and combined above
 
         // Format the response
         return [
