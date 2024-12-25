@@ -31,21 +31,25 @@ function checkStatistics() {
         $startTime = $startDateTime->format('Y-m-d H:i:s');
         $endTime = $endDateTime->format('Y-m-d H:i:s');
 
-        // Get all records and count unique phones
+        // Get all records and count unique phones (一个号码只能统计一次，不管stuta状态是多少)
         $stmt1 = $db->prepare("
             SELECT * FROM taozi_dx WHERE shijian > :start
         ");
         $stmt1->execute(['start' => $startTime]);
         $allRecords = $stmt1->fetchAll(PDO::FETCH_ASSOC);
-        $uniquePhones = ['total' => count(array_unique(array_column($allRecords, 'phone')))];
+        $uniquePhones = array_unique(array_column($allRecords, 'phone'));
+        $uniquePhoneCount = ['total' => count($uniquePhones)];
 
-        // Get all success records (stuta=2)
+        // Get all success records (stuta=2可能出现多次)
         $stmt2 = $db->prepare("
             SELECT * FROM taozi_dx WHERE shijian > :start AND stuta = 2
         ");
         $stmt2->execute(['start' => $startTime]);
         $successRecords = $stmt2->fetchAll(PDO::FETCH_ASSOC);
         $successStats = ['success' => count($successRecords)];
+
+        // Use uniquePhoneCount for total and raw success count for success rate
+        $uniquePhones = $uniquePhoneCount;
 
         // Combine results
         $stats = [
