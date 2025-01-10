@@ -50,9 +50,17 @@ class ExceptionHandle extends Handle
      */
     public function render($request, Throwable $e): Response
     {
-        // 添加自定义异常处理机制
+        // API routes should always return JSON
+        if (strpos($request->pathinfo(), 'api/') === 0) {
+            return json([
+                'code' => 500,
+                'message' => $e->getMessage(),
+                'data' => null,
+                'trace' => app()->isDebug() ? $e->getTrace() : []
+            ]);
+        }
 
-        // 其他错误交给系统处理
+        // Other errors handled by system
         return parent::render($request, $e);
     }
 }

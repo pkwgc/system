@@ -4,7 +4,7 @@ use think\facade\Route;
 // API routes group
 Route::group('api', function () {
     // User authentication routes
-    Route::post('auth/login', 'auth/login');
+    Route::post('auth/login', 'Auth/login');
     
     // Customer routes - protected by auth middleware
     Route::group('customer', function () {
