@@ -6,7 +6,7 @@ class CreateUsersTable extends Migrator
 {
     public function change()
     {
-        $this->table('users')
+        $this->table('users', ['engine' => 'InnoDB', 'collate' => 'utf8mb4_unicode_ci'])
             ->addColumn('user_id', 'string', ['limit' => 32, 'null' => false, 'comment' => '用户唯一标识'])
             ->addColumn('key', 'string', ['limit' => 32, 'null' => false, 'comment' => '用户密钥'])
             ->addColumn('balance', 'decimal', ['precision' => 10, 'scale' => 2, 'default' => '0.00', 'comment' => '账户余额'])
@@ -14,7 +14,7 @@ class CreateUsersTable extends Migrator
             ->addColumn('status', 'string', ['limit' => 20, 'default' => 'active', 'comment' => '用户状态：active/blocked'])
             ->addColumn('create_time', 'datetime', ['null' => true])
             ->addColumn('update_time', 'datetime', ['null' => true])
-            ->addIndex(['user_id'], ['unique' => true])
+            ->addIndex(['user_id'], ['unique' => true, 'name' => 'idx_users_user_id'])
             ->create();
     }
 }
