@@ -71,6 +71,12 @@
             margin: 10px 0;
         }
         
+        .project-name {
+            color: #60a5fa;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        
         .success-rate {
             color: var(--success);
         }
@@ -157,7 +163,6 @@
     <div class="container">
         <div class="header">
             <h1>数据统计验证</h1>
-            <p id="projectName"></p>
             <p>实时监控下单成功率（按唯一手机号统计）</p>
         </div>
         
@@ -172,6 +177,7 @@
                 <h3>下单统计 (唯一手机号)</h3>
                 <p>数据表: taozi_dx</p>
                 <p>字段: phone (手机号), stuta (状态)</p>
+                <p id="projectName" class="project-name">项目名称: --</p>
                 <div id="orderStats">
                     <div class="stat success-rate">--%</div>
                     <p>成功率</p>
@@ -225,9 +231,9 @@
             
             const statsData = data.data;
             
-            // Update project name
+            // Update project name and order stats
             const projectName = statsData.projectName || '未命名项目';
-            document.querySelector('.header p:nth-child(2)').innerText = `项目名称: ${projectName}`;
+            document.getElementById('projectName').innerText = `项目名称: ${projectName}`;
 
             // Update order stats with unique phone numbers
             const orderStats = document.getElementById('orderStats');
