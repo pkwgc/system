@@ -19,50 +19,42 @@ function checkStatistics() {
             return ["status" => "error", "message" => "Invalid date format"];
         }
 
-        // Query for total unique phones in taozi_dx table (count each phone only once)
+        // Query for statistics grouped by project name
         $stmt = $db->prepare("
-            SELECT COUNT(DISTINCT phone) as total
+            SELECT 
+                COALESCE(name, '') as projectName,
+                COUNT(DISTINCT phone) as total,
+                SUM(CASE WHEN stuta = 2 THEN 1 ELSE 0 END) as success
             FROM taozi_dx 
             WHERE shijian BETWEEN :start AND :end
+            GROUP BY name
         ");
         $stmt->execute(['start' => $startTime, 'end' => $endTime]);
-        $totalStats = $stmt->fetch(PDO::FETCH_ASSOC);
+        $projectStats = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Query for success records (stuta=2, allowing duplicates)
-        $stmt = $db->prepare("
-            SELECT COUNT(*) as success
-            FROM taozi_dx 
-            WHERE shijian BETWEEN :start AND :end 
-            AND stuta = 2
-        ");
-        $stmt->execute(['start' => $startTime, 'end' => $endTime]);
-        $successStats = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        // Query for project name
-        $stmt = $db->prepare("
-            SELECT name 
-            FROM taozi_dx 
-            WHERE shijian BETWEEN :start AND :end 
-            LIMIT 1
-        ");
-        $stmt->execute(['start' => $startTime, 'end' => $endTime]);
-        $nameRow = $stmt->fetch(PDO::FETCH_ASSOC);
-        $projectName = $nameRow ? $nameRow['name'] : '';
-
-        $total = intval($totalStats['total']);
-        $success = intval($successStats['success']);
+        // Process statistics for each project
+        $projects = [];
+        foreach ($projectStats as $stat) {
+            $total = intval($stat['total']);
+            $success = intval($stat['success']);
+            // Ensure projectName is never null
+            $projectName = empty($stat['projectName']) ? '' : $stat['projectName'];
+            $projects[] = [
+                "projectName" => $projectName,
+                "total" => $total,
+                "success" => $success,
+                "rate" => $total > 0 ? round(($success / $total) * 100, 2) : 0
+            ];
+        }
 
         return [
             "status" => "success",
             "data" => [
-                "total" => $total,
-                "success" => $success,
-                "rate" => $total > 0 ? round(($success / $total) * 100, 2) : 0,
+                "projects" => $projects,
                 "timeRange" => [
                     "start" => $startTime,
                     "end" => $endTime
-                ],
-                "projectName" => $projectName
+                ]
             ]
         ];
     } catch (PDOException $e) {

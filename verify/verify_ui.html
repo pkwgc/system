@@ -76,6 +76,16 @@
             margin: 10px 0;
             font-weight: 500;
         }
+
+        .empty-state {
+            text-align: center;
+            color: #94a3b8;
+        }
+
+        .empty-state h3 {
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
         
         .success-rate {
             color: var(--success);
@@ -172,20 +182,8 @@
             <button onclick="fetchStats()">查询统计</button>
         </div>
         
-        <div class="grid">
-            <div class="card">
-                <h3>下单统计 (唯一手机号)</h3>
-                <p>数据表: taozi_dx</p>
-                <p>字段: phone (手机号), stuta (状态)</p>
-                <p id="projectName" class="project-name">项目名称: --</p>
-                <div id="orderStats">
-                    <div class="stat success-rate">--%</div>
-                    <p>成功率</p>
-                    <p>总数: --</p>
-                    <p>成功: --</p>
-                </div>
-            </div>
-            
+        <div id="statsContainer" class="grid">
+            <!-- Project statistics cards will be dynamically inserted here -->
         </div>
     </div>
     
@@ -230,19 +228,44 @@
             }
             
             const statsData = data.data;
+            const container = document.getElementById('statsContainer');
+            container.innerHTML = ''; // Clear existing cards
             
-            // Update project name and order stats
-            const projectName = statsData.projectName || '未命名项目';
-            document.getElementById('projectName').innerText = `项目名称: ${projectName}`;
+            // Handle no projects case
+            if (!statsData.projects || statsData.projects.length === 0) {
+                const emptyCard = document.createElement('div');
+                emptyCard.classList.add('card', 'empty-state');
+                emptyCard.innerHTML = `
+                    <h3>暂无数据</h3>
+                    <p>所选时间范围内没有项目数据</p>
+                `;
+                container.appendChild(emptyCard);
+                return;
+            }
 
-            // Update order stats with unique phone numbers
-            const orderStats = document.getElementById('orderStats');
-            orderStats.innerHTML = `
-                <div class="stat success-rate">${statsData.rate}%</div>
-                <p>成功率</p>
-                <p>总数: ${formatNumber(statsData.total)}</p>
-                <p>成功: ${formatNumber(statsData.success)}</p>
-            `;
+            // Sort projects by success rate (highest first)
+            const sortedProjects = [...statsData.projects].sort((a, b) => b.rate - a.rate);
+
+            // Create a card for each project
+            sortedProjects.forEach(project => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                
+                card.innerHTML = `
+                    <h3>下单统计 (唯一手机号)</h3>
+                    <p>数据表: taozi_dx</p>
+                    <p>字段: phone (手机号), stuta (状态)</p>
+                    <p class="project-name">项目名称: ${project.projectName || '未命名项目'}</p>
+                    <div class="stats">
+                        <div class="stat success-rate">${project.rate}%</div>
+                        <p>成功率</p>
+                        <p>总数: ${formatNumber(project.total)}</p>
+                        <p>成功: ${formatNumber(project.success)}</p>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
             
             // System status removed
         }
@@ -290,7 +313,7 @@
                 const formattedStartTime = formatDateForAPI(startTime) + ':00';
                 const formattedEndTime = formatDateForAPI(endTime) + ':59';
                 
-                // Format the URL with date range for chundianxin table
+                // Format the URL with date range
                 const url = `verify_all.php?startTime=${encodeURIComponent(formattedStartTime)}&endTime=${encodeURIComponent(formattedEndTime)}`;
                 console.log('Fetching stats for date range:', { formattedStartTime, formattedEndTime });
                 
@@ -307,11 +330,7 @@
                 console.log('API Response:', {
                     url,
                     timeRange: data.data.timeRange,
-                    stats: {
-                        total: data.data.total,
-                        success: data.data.success,
-                        rate: data.data.rate
-                    }
+                    projects: data.data.projects
                 });
                 updateStats(data);
             } catch (error) {
